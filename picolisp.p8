@@ -355,9 +355,6 @@ function evfn(fn, args, env)
   assert(envf ~= nil)
   return eval(forms, envf)
 end
-def("e", prelude)
-def("exp", evfn)
-def("get", getval)
 function evlist(l, env)
   if isempty(l) then
     return nil
@@ -454,7 +451,7 @@ function eval(form, env)
       return evlist(first(rst), env)
     elseif fst == "def" then
       return def(
-       first(rst), eval(second(rst), env))
+       first(rst), eval(second(rst), prelude))
     elseif fst == "cond" then
       return evcond(rst, env)
     elseif fst == "let" then
@@ -744,21 +741,21 @@ assert(
   == "(13 ((abc 123)) ())")
 def("print", print)
 
-ifmacro= "(def if (macro (tst hpy sad) `('cond tst  hpy $t sad)))"
-eval(parse(ifmacro), prelude)
--- (defn inc (x) (+ 1 x))
---       name args impl
--- (def inc (fn name args))
-defmacro= "(def defn (macro (name args impl) `('def name `('fn args impl))))"
+defnmacro= "(def defn (macro (name args impl) `('def name `('fn args impl))))"
+eval(parse(defnmacro), prelude)
+inc="(defn inc (x) (+ x 1))"
+eval(parse(inc), prelude)
+defmacro="(def defmacro (macro (name args impl) `('def name `('macro args impl))))"
 eval(parse(defmacro), prelude)
-astr="(def a 10)"
-eval(parse(astr), prelude)
-e1str="(def e1 '(if t h s))"
-eval(parse(e1str), prelude)
-e2str="(def e2 '(+ 1 2))"
-eval(parse(e2str), prelude)
-e3str="(def e3 '(defn inc (x) (+ x 1)))"
-eval(parse(e3str), prelude)
+ifmacro= "(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))"
+eval(parse(ifmacro), prelude)
+
+def("pass", 0, prelude)
+def("fail", 0, prelude)
+def("tests", cons("$t"), prelude)
+tstmacro = "(def tst (macro (case) `(case)))"
+eval(parse(tstmacro), prelude)
+
 -->8
 function update_line(delta,l)
   if l == nil then
