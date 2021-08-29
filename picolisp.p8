@@ -10,7 +10,12 @@ function isempty(l)
   elseif type(l) == "table" then
     return false
   else
-    assert(false, type(l))
+    assert(
+     false,
+     "expected a list: " ..
+      type(l) ..
+      " : " ..
+      tostring(l))
   end
 end
 assert(isempty(nil) == true)
@@ -116,6 +121,13 @@ function pair(a, b)
   return cons(a, cons(b))
 end
 def("pair", pair)
+function tripple(a,b,c)
+  return cons(
+   a, cons(
+    b, cons(
+     c)))
+end
+def("tripple", tripple)
 function str2cons(str)
   local t = split(str, "", false)
   local l = nil
@@ -279,6 +291,12 @@ function string(form)
     return form
   elseif native(form) then
     return "native"
+  elseif isbool(form) then
+    if form == true then
+      return "$t"
+    else
+      return nil
+    end
   elseif islist(form) then
     local sep = ""
     local s = "("
@@ -290,12 +308,6 @@ function string(form)
     end
     s = s .. ")"
     return s
-  elseif isbool(form) then
-    if form == true then
-      return "$t"
-    else
-      return nil
-    end
   else
     assert(false, type(form))
   end
@@ -348,9 +360,9 @@ function apply(fn, args, env)
   else
     assert(false,
      "not a fn "..
-     string(f)..
+     type(f)..
      ":" ..
-     type(f))
+     string(f))
   end
 end
 assert(apply(
@@ -402,6 +414,7 @@ function ns(env)
   end
   return new
 end
+def("ns", ns)
 function evlet(f, env)
   local vars = first(f)
   local envf = deflst(
@@ -418,6 +431,8 @@ function eval(form, env)
       return nil
     elseif fst == "quote" then
       return rst
+    elseif fst == "list" then
+      return evlist(rst, env)
     elseif fst == "def" then
       return def(
        first(rst), eval(second(rst), env))
@@ -464,14 +479,21 @@ assert(
 def("eval", eval)
 -->8
 function takepred(p,r,l)
-  local o = nil
+  local chars = 0
+  local acc = nil
+  local out = nil
   local c = first(l)
   while p(c) do
-    o = r(o, c)
+    chars += 1
+    acc = r(acc, c)	
     l = rest(l)
     c = first(l)
+    out = cons(acc)
   end
-  return pair(o, l)
+  return tripple(
+  chars, 
+  out, 
+  l)
 end
 function buildstr(a,c)
   if a == nil then
@@ -491,12 +513,12 @@ assert(
   string(
     takesym(
       str2cons("")))
-  == "(() ())")
+  == "(0 () ())")
 assert(
   string(
     takesym(
       str2cons("abc 123")))
-  == "(abc (  1 2 3))")
+  == "(3 (abc) (  1 2 3))")
 function buildnum(a, c)
   if a == nil then
     a = 0
@@ -517,12 +539,12 @@ assert(
   string(
     takenum(
       str2cons("")))
-  == "(() ())")
+  == "(0 () ())")
 assert(
   string(
     takenum(
       str2cons("123 abc")))
-  == "(123 (  a b c))")
+  == "(3 (123) (  a b c))")
 function takewhite(l)
   return takepred(
       iswhite,
@@ -533,92 +555,123 @@ assert(
   string(
     takewhite(
       str2cons("")))
-  == "(() ())")
+  == "(0 () ())")
 assert(
   string(
     takewhite(
       str2cons("  123")))
-  == "(   (1 2 3))")
-  
-function isparen(c)
-  if c == nil then
-    return false
-  else
-    return c == "("
+  == "(2 (  ) (1 2 3))")
+function taketoks(l)
+  local head = read(l)
+  if second(head) == nil then
+    return tripple(
+     first(head),
+     nil,
+     third(head))
   end
+  local tail = taketoks(
+   third(head))
+  return tripple(
+   first(head) + first(tail),
+   cons(
+    first(second(head)),
+    second(tail)),
+   third(tail))
 end
-assert(isparen(nil) == false)
-assert(isparen("(") == true)
-assert(isparen(")") == false)
-assert(isparen(" ") == false)
-
 function takelist(l)
-  local o = nil
-  local c = first(l)
-  if c ~= "(" then
-    return pair(nil, l)
+  if first(l) ~= "(" then
+    return tripple(0, nil, l)
   end
   l = rest(l)
-  c = first(l)
-  while c ~= ")" and c ~= nil do
-    -- we are inside the list
-    r = read(l)
-    if first(r) ~= nil then
-      o = cons(first(r), o)
-    else
-      -- print("list skip white")
-    end
-    l = second(r)
-    c = first(l)
+  local chars = 1
+  local toks = taketoks(l)
+  chars += first(toks)
+  local lst = second(toks)
+  l = third(toks)
+  if first(l) ~= ")" then
+    return tripple(
+     chars,
+     nil,
+     l)
   end
-  assert(c == ")")
   l = rest(l)
-  return pair(reverse(o),l)
+  chars += 1
+  return tripple(
+   chars,
+   cons(lst),
+   l)
 end
-
-function read(l)
-  local c = first(l)
-  --print("read")
-  --print("l:"..string(l))
-  --print("c:" .. c)
-  local r
-  local rnum = takenum(l)
-  local ralpha = takesym(l)
-  local rlist = takelist(l)
-  local rwhite = takewhite(l)
-  if first(rwhite) then
-    r = pair(nil, second(rwhite))
-  elseif first(rlist) then
-    r = rlist
-  --elseif c == ")" then
-    --print("read hit list end")
-  --  r = pair(nil, l)
-  elseif first(rnum) then
-    r = rnum
-  elseif first(ralpha) then
-    r = ralpha
-  elseif c ~= nil then
-    assert(false,
-      "unexpected char `"..
-      tostring(c)..
-      "` context `" ..
-      string(l) .. 
-      "`")
+function macro(c,f,l)
+  if first(l) == c then
+    l = rest(l)
+    local nxt = read(l)
+    if second(nxt) then
+      return tripple(
+       first(nxt)+1,
+       cons(
+        cons( -- pair(
+         f,
+         first(second(nxt)))),
+       third(nxt))
+     else
+       return tripple(
+        first(nxt)+1,
+        nil,
+        third(nxt))
+      end
   else
-    assert(c==nil)
-    assert(l==nil)
-    r = pair(c, l)
+    return tripple(0,nil,l)
   end
-  o = first(r)
-  l = second(r)
-  return pair(o, l)
+end
+function quoter(l)
+  return macro("'", "quote", l)
+end
+function lister(l)
+  return macro("`", "list", l)
+end
+parsers = {
+  quoter,
+  lister,
+  takenum,
+  takesym,
+  takelist}
+function read(l)
+  local chars = 0
+  if l == nil then
+    return tripple(0, cons(nil), nil)
+  end
+	  local white = takewhite(l)
+  chars += first(white)
+  l = third(white)
+  for p in all(parsers) do
+    local o = p(l)
+    local c = first(o)
+    local mv = second(o)
+    local r = third(o)
+    chars+=c
+    local white = takewhite(r)
+    chars+=first(white)
+    r2 = third(white)
+    if mv ~= nil then
+     return tripple(
+      chars,mv,r2)
+    end
+  end
+  return tripple(0, nil, l)
 end
 function parse(s)
   local chars = str2cons(s)
-  local forms = read(chars)
-  local rem = second(forms)
-  assert(rem == nil, string(rem))
-  local expr = first(forms)
+  local out = read(chars)
+  assert(
+   second(out) ~= nil,
+   "failed to parse: "..
+    s)
+  local expr = first(second(out))
+  local rem = third(out)
+  assert(
+   rem == nil,
+   "remaining: "..
+    string(rem))
   return expr
 end
 assert(
@@ -626,25 +679,25 @@ assert(
     takelist(
       str2cons(
         "()"))) 
-  == "(() ())")
+  == "(2 (()) ())")
 assert(
   string(
     takelist(
       str2cons(
         "( )"))) 
-  == "(() ())")
+  == "(2 (()) ())")
+-- assert(
+--   string(parse(" "))
+--   == "()") --"(() ())")
 assert(
-  string(parse(" "))
-  == "()") --"(() ())")
+  string(parse("123"))
+  == "123") --"(123 ())")
 assert(
-  parse("123")
-  == 123) --"(123 ())")
-assert(
-  parse("abc")
-  == "abc") --"(abc ())")
-assert(
+  string(parse("abc"))
+  == "abc")
+print( -- assert(
   string(parse("(123a)"))
-  == "(123 a)") --todo wrong
+) --  == "((123 a))") --todo wrong
 assert(
   string(parse("(abc1)"))
   == "(abc1)")
@@ -652,10 +705,16 @@ assert(
   string(parse("(abc)"))
   == "(abc)")
 assert(
-  string(read(str2cons("( abc 123 ) "))) --todo leading white
-  == "((abc 123) ( ))") --todo tail white
-  
+  string(
+   read(
+    str2cons(" ( abc 123 ) ")))
+  == "(13 ((abc 123)) ())")
 def("print", print)
+
+astr="(def a 10)"
+eval(parse(astr), prelude)
+ifstr="(def ifmacro (fn (f) (cond (= (nth 0 f) if) 1 $t 2)))" -- `('cond (nth 1 f) (nth 2f) $t (nth 3 f)) $t f)))"
+eval(parse(ifstr), prelude)
 -->8
 function update_line(delta,l)
   if l == nil then
