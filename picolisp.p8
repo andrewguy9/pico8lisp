@@ -337,7 +337,7 @@ function evfn(fn, args, env)
   local envf = defzip(
    binds, args, copy)
   assert(envf ~= nil)
-  return eval(forms, envf)  
+  return eval(forms, envf)
 end
 -- symbol (1 2)
 -- native (1 2)
@@ -609,7 +609,7 @@ function macro(c,f,l)
       return tripple(
        first(nxt)+1,
        cons(
-        cons( -- pair(
+        cons(
          f,
          first(second(nxt)))),
        third(nxt))
@@ -713,8 +713,17 @@ def("print", print)
 
 astr="(def a 10)"
 eval(parse(astr), prelude)
-ifstr="(def ifmacro (fn (f) (cond (= (nth 0 f) if) 1 $t 2)))" -- `('cond (nth 1 f) (nth 2f) $t (nth 3 f)) $t f)))"
+ifstr=  "(def ifm  (fn (f) (cond (= (nth 0 f) 'if)   `('cond (nth 1 f)  (nth 2 f) $t (nth 3 f))    $t f)))"
+defnstr="(def defn (fn (f) (cond (= (nth 0 f) 'defn) `('def  (nth 1 f) `('fn (nth 2 f) (nth 3 f))) $t f)))"
+eval(parse(defnstr), prelude)
 eval(parse(ifstr), prelude)
+
+e1str="(def e1 '(if t h s))"
+eval(parse(e1str), prelude)
+e2str="(def e2 '(+ 1 2))"
+eval(parse(e2str), prelude)
+e3str="(def e3 '(defn inc (x) (+ x 1)))"
+eval(parse(e3str), prelude)
 -->8
 function update_line(delta,l)
   if l == nil then
