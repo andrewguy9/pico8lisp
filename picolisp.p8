@@ -355,6 +355,9 @@ function evfn(fn, args, env)
   assert(envf ~= nil)
   return eval(forms, envf)
 end
+def("e", prelude)
+def("exp", evfn)
+def("get", getval)
 function evlist(l, env)
   if isempty(l) then
     return nil
@@ -378,11 +381,10 @@ function apply(fn, args, env)
   elseif native(fn) then
     args = evlist(args, env)
     args = decons(args)
-    local r = fn(unpack(args))
     return fn(unpack(args))
   elseif first(fn) == "fn" then
     assert(env ~= nil)
-    args = evlist(rst, env)
+    args = evlist(args, env)
     return evfn(fn, args, env)
   elseif first(fn) == "macro" then
     assert(env ~= nil)
@@ -461,7 +463,7 @@ function eval(form, env)
       return form
     elseif fst == "macro" then
       return form
-    else
+    else -- must be an call
       --fst (fn (a b) (+ a b))
       --rst (1 2)
       return apply(fst, rst, env)
@@ -481,6 +483,10 @@ end
 assert(apply(
   add_op,
   cons(1, cons(2, nil))) == 3)
+assert(apply(
+  "+",
+  cons(1, cons(2, nil)),
+  prelude) == 3)
 assert(eval(1) == 1)
 assert(eval("+", prelude) == add_op)
 assert(eval(nil) == nil)
@@ -738,13 +744,13 @@ assert(
   == "(13 ((abc 123)) ())")
 def("print", print)
 
-ifstr=  "(def ifm  (macro (f) (cond (= (nth 0 f) 'if)   `('cond (nth 1 f)  (nth 2 f) $t (nth 3 f))    $t f)))"
-defnstr="(def defn (macro (f) (cond (= (nth 0 f) 'defn) `('def  (nth 1 f) `('fn (nth 2 f) (nth 3 f))) $t f)))"
-eval(parse(defnstr), prelude)
-eval(parse(ifstr), prelude)
-
 ifmacro= "(def if (macro (tst hpy sad) `('cond tst  hpy $t sad)))"
 eval(parse(ifmacro), prelude)
+-- (defn inc (x) (+ 1 x))
+--       name args impl
+-- (def inc (fn name args))
+defmacro= "(def defn (macro (name args impl) `('def name `('fn args impl))))"
+eval(parse(defmacro), prelude)
 astr="(def a 10)"
 eval(parse(astr), prelude)
 e1str="(def e1 '(if t h s))"
