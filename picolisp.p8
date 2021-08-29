@@ -284,6 +284,28 @@ assert(count(
     cons(1,
       cons(2, nil)))) == 2)
 def("decons", decons)
+function stringseq(seq)
+  if seq == nil then
+    return ""
+  else
+    assert(
+     type(seq) == "table",
+     "unexpected:" .. tostring(seq))
+    local fst =
+     string(
+      first(
+       seq))
+    if rest(seq) then
+      local rst =
+       stringseq(
+        rest(
+         seq))
+      return fst .. " " .. rst
+    else
+      return fst
+    end
+  end
+end
 function string(form)
   if isnum(form) then
     return tostring(form)
@@ -295,19 +317,13 @@ function string(form)
     if form == true then
       return "$t"
     else
-      return nil
+      assert(
+       false,
+       "got false, not nil")
     end
   elseif islist(form) then
-    local sep = ""
-    local s = "("
-    while not isempty(form) do
-      s = s .. sep ..
-          string(first(form))
-      sep = " "
-      form = rest(form)
-    end
-    s = s .. ")"
-    return s
+    local toks = stringseq(form)
+    return "(" .. toks .. ")"
   else
     assert(false, type(form))
   end
@@ -339,36 +355,6 @@ function evfn(fn, args, env)
   assert(envf ~= nil)
   return eval(forms, envf)
 end
--- symbol (1 2)
--- native (1 2)
--- (fn (a b) (+ a b) (1 2) (.)
-function apply(fn, args, env)
-  local f = nil
-  if issym(fn) then
-    f = getval(fn, env)
-    assert(fn~=nil,
-     "unbound fn name: "..fn)
-  else
-    f = fn
-  end
-  if native(f) then
-    local t = decons(args)
-    return f(unpack(t))
-  elseif first(f) == "fn" then
-    assert(env ~= nil)
-    return evfn(f, args, env)
-  else
-    assert(false,
-     "not a fn "..
-     type(f)..
-     ":" ..
-     string(f))
-  end
-end
-assert(apply(
-  add_op,
-  cons(1, cons(2, nil))) == 3)
-def("apply", apply)
 function evlist(l, env)
   if isempty(l) then
     return nil
@@ -380,6 +366,37 @@ function evlist(l, env)
     return cons(fst, rst)
   end
 end
+-- symbol (1 2)
+-- native (1 2)
+-- (fn (a b) (+ a b) (1 2) (.)
+function apply(fn, args, env)
+  if issym(fn) then
+    return apply(
+      eval(fn, env),
+      args,
+      env)
+  elseif native(fn) then
+    args = evlist(args, env)
+    args = decons(args)
+    local r = fn(unpack(args))
+    return fn(unpack(args))
+  elseif first(fn) == "fn" then
+    assert(env ~= nil)
+    args = evlist(rst, env)
+    return evfn(fn, args, env)
+  elseif first(fn) == "macro" then
+    assert(env ~= nil)
+    local exp = evfn(fn, args, env)
+    return eval(exp, env)
+  else
+    assert(false,
+     "not a fn "..
+     type(fn)..
+     ":" ..
+     string(fn))
+  end
+end
+def("apply", apply)
 function evcond(f, env)
   assert(f ~= nil,
    "cond fallthrough")
@@ -430,9 +447,9 @@ function eval(form, env)
     if fst == nil then
       return nil
     elseif fst == "quote" then
-      return rst
+      return first(rst)
     elseif fst == "list" then
-      return evlist(rst, env)
+      return evlist(first(rst), env)
     elseif fst == "def" then
       return def(
        first(rst), eval(second(rst), env))
@@ -442,22 +459,28 @@ function eval(form, env)
       return evlet(rst, env)
     elseif fst == "fn" then
       return form
+    elseif fst == "macro" then
+      return form
     else
       --fst (fn (a b) (+ a b))
       --rst (1 2)
-      local args = evlist(rst, env)
-      return apply(fst, args, env)
+      return apply(fst, rst, env)
     end
-  else
+  else -- not a list
     if form == true then
       return true
     elseif isnum(form) then
+      return form
+    elseif native(form) then
       return form
     else
       return getval(form, env)
     end
   end
 end
+assert(apply(
+  add_op,
+  cons(1, cons(2, nil))) == 3)
 assert(eval(1) == 1)
 assert(eval("+", prelude) == add_op)
 assert(eval(nil) == nil)
@@ -605,21 +628,24 @@ function readmacro(c,f,l)
   if first(l) == c then
     l = rest(l)
     local nxt = read(l)
-    if second(nxt) then
+    local nxt_chars = first(nxt)
+    local nxt_tok = second(nxt)
+    local nxt_rem = third(nxt)
+    if nxt_tok then
       return tripple(
-       first(nxt)+1,
+       nxt_chars+1,
        cons(
         cons(
          f,
-         first(second(nxt)))),
-       third(nxt))
+         nxt_tok)),
+       nxt_rem)
      else
        return tripple(
-        first(nxt)+1,
+        nxt_chars+1,
         nil,
-        third(nxt))
+        nxt_rem)
       end
-  else
+  else -- not macro
     return tripple(0,nil,l)
   end
 end
@@ -644,6 +670,7 @@ function read(l)
   chars += first(white)
   l = third(white)
   for p in all(parsers) do
+    --todo take the longest parse
     local o = p(l)
     local c = first(o)
     local mv = second(o)
@@ -695,9 +722,9 @@ assert(
 assert(
   string(parse("abc"))
   == "abc")
-print( -- assert(
+assert(
   string(parse("(123a)"))
-) --  == "((123 a))") --todo wrong
+  == "(123 a)") --todo wrong
 assert(
   string(parse("(abc1)"))
   == "(abc1)")
@@ -711,11 +738,13 @@ assert(
   == "(13 ((abc 123)) ())")
 def("print", print)
 
-ifstr=  "(def ifm  (fn (f) (cond (= (nth 0 f) 'if)   `('cond (nth 1 f)  (nth 2 f) $t (nth 3 f))    $t f)))"
-defnstr="(def defn (fn (f) (cond (= (nth 0 f) 'defn) `('def  (nth 1 f) `('fn (nth 2 f) (nth 3 f))) $t f)))"
+ifstr=  "(def ifm  (macro (f) (cond (= (nth 0 f) 'if)   `('cond (nth 1 f)  (nth 2 f) $t (nth 3 f))    $t f)))"
+defnstr="(def defn (macro (f) (cond (= (nth 0 f) 'defn) `('def  (nth 1 f) `('fn (nth 2 f) (nth 3 f))) $t f)))"
 eval(parse(defnstr), prelude)
 eval(parse(ifstr), prelude)
 
+ifmacro= "(def if (macro (tst hpy sad) `('cond tst  hpy $t sad)))"
+eval(parse(ifmacro), prelude)
 astr="(def a 10)"
 eval(parse(astr), prelude)
 e1str="(def e1 '(if t h s))"
