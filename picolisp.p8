@@ -485,7 +485,7 @@ function takepred(p,r,l)
   local c = first(l)
   while p(c) do
     chars += 1
-    acc = r(acc, c)	
+    acc = r(acc, c)
     l = rest(l)
     c = first(l)
     out = cons(acc)
@@ -601,7 +601,7 @@ function takelist(l)
    cons(lst),
    l)
 end
-function macro(c,f,l)
+function readmacro(c,f,l)
   if first(l) == c then
     l = rest(l)
     local nxt = read(l)
@@ -624,10 +624,10 @@ function macro(c,f,l)
   end
 end
 function quoter(l)
-  return macro("'", "quote", l)
+  return readmacro("'", "quote", l)
 end
 function lister(l)
-  return macro("`", "list", l)
+  return readmacro("`", "list", l)
 end
 parsers = {
   quoter,
@@ -711,13 +711,13 @@ assert(
   == "(13 ((abc 123)) ())")
 def("print", print)
 
-astr="(def a 10)"
-eval(parse(astr), prelude)
 ifstr=  "(def ifm  (fn (f) (cond (= (nth 0 f) 'if)   `('cond (nth 1 f)  (nth 2 f) $t (nth 3 f))    $t f)))"
 defnstr="(def defn (fn (f) (cond (= (nth 0 f) 'defn) `('def  (nth 1 f) `('fn (nth 2 f) (nth 3 f))) $t f)))"
 eval(parse(defnstr), prelude)
 eval(parse(ifstr), prelude)
 
+astr="(def a 10)"
+eval(parse(astr), prelude)
 e1str="(def e1 '(if t h s))"
 eval(parse(e1str), prelude)
 e2str="(def e2 '(+ 1 2))"
