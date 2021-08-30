@@ -698,11 +698,14 @@ function parse(s)
     s)
   local expr = first(second(out))
   local rem = third(out)
-  assert(
-   rem == nil,
-   "remaining: "..
-    string(rem))
-  return expr
+  if rem ~= nil then
+    return cons(
+     "error",
+     cons("remaining",
+       cons(rem)))
+  else
+    return cons("success", expr)
+  end
 end
 assert(
   string(
@@ -720,19 +723,19 @@ assert(
 --   string(parse(" "))
 --   == "()") --"(() ())")
 assert(
-  string(parse("123"))
+  string(rest(parse("123")))
   == "123") --"(123 ())")
 assert(
-  string(parse("abc"))
+  string(rest(parse("abc")))
   == "abc")
 assert(
-  string(parse("(123a)"))
+  string(rest(parse("(123a)")))
   == "(123 a)") --todo wrong
 assert(
-  string(parse("(abc1)"))
+  string(rest(parse("(abc1)")))
   == "(abc1)")
 assert(
-  string(parse("(abc)"))
+  string(rest(parse("(abc)")))
   == "(abc)")
 assert(
   string(
@@ -742,19 +745,29 @@ assert(
 def("print", print)
 
 defnmacro= "(def defn (macro (name args impl) `('def name `('fn args impl))))"
-eval(parse(defnmacro), prelude)
+eval(
+ rest(
+  parse(defnmacro)), prelude)
 inc="(defn inc (x) (+ x 1))"
-eval(parse(inc), prelude)
+eval(
+ rest(
+  parse(inc)), prelude)
 defmacro="(def defmacro (macro (name args impl) `('def name `('macro args impl))))"
-eval(parse(defmacro), prelude)
+eval(
+ rest(
+  parse(defmacro)), prelude)
 ifmacro= "(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))"
-eval(parse(ifmacro), prelude)
+eval(
+ rest(
+  parse(ifmacro)), prelude)
 
 def("pass", 0, prelude)
 def("fail", 0, prelude)
 def("tests", cons("$t"), prelude)
 tstmacro = "(def tst (macro (case) `(case)))"
-eval(parse(tstmacro), prelude)
+eval(
+ rest(
+  parse(tstmacro)), prelude)
 
 -->8
 function update_line(delta,l)
@@ -810,11 +823,18 @@ function repl()
         t = sub(t,1,#t-1)
       elseif c=="\13" then
         update_line(1)
-        local out =
-         string(
-          eval(
-           parse(t),
-           prelude))
+        local parsed =
+          parse(t)
+        local out = nil
+        if first(parsed) == "error" then
+          out = string(parsed)
+        else
+          out =
+           string(
+            eval(
+             rest(parsed),
+             prelude))
+        end
         print_line(out, 9)
         update_line(1)
         t = ""
