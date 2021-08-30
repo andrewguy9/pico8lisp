@@ -602,6 +602,9 @@ assert(
       str2cons("  123")))
   == "(2 (  ) (1 2 3))")
 function taketoks(l)
+  if l == nil then
+    return tripple(0, nil, nil)
+  end
   local head = read(l)
   if second(head) == nil then
     return tripple(
@@ -683,7 +686,7 @@ function read(l)
   if l == nil then
     return tripple(0, cons(nil), nil)
   end
-	  local white = takewhite(l)
+  local white = takewhite(l)
   chars += first(white)
   l = third(white)
   for p in all(parsers) do
