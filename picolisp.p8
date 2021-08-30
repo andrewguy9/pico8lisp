@@ -298,9 +298,11 @@ function stringseq(seq)
   if seq == nil then
     return ""
   else
-    assert(
-     type(seq) == "table",
-     "unexpected:" .. tostring(seq))
+    if type(seq) ~= "table" then
+      return error(
+       "unexpected",
+       tostring(seq))
+    end
     local fst =
      string(
       first(
@@ -397,11 +399,11 @@ function apply(fn, args, env)
     assert(env ~= nil)
     local exp = evfn(fn, args, env)
     return eval(exp, env)
+  elseif first(fn) == "error" then
+    return fn
   else
-    assert(false,
-     "not a fn "..
-     type(fn)..
-     ":" ..
+    return error(
+     "not a fn",
      string(fn))
   end
 end
@@ -469,6 +471,8 @@ function eval(form, env)
     elseif fst == "fn" then
       return form
     elseif fst == "macro" then
+      return form
+    elseif fst == "error" then
       return form
     else -- must be an call
       --fst (fn (a b) (+ a b))
