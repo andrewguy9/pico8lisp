@@ -1,11 +1,13 @@
 # Into to Pico8lisp
 
+[![CC BY 4.0][cc-by-shield]][cc-by]
+
 Pico8lisp is a small lisp interpreter built on PICO-8 virtual machine!
 To start the interactive programming environment: `load picolisp.pb` then start a shell with `Command (⌘)-R`
 
 The shell is currently inflexible. If your environment crashes, restart it with `Command (⌘)-R`
 
-# Getting Started
+# Try it out!
 
 Try out Pico8Lisp on the Pico8 Website [here](https://www.lexaloffle.com/bbs/?pid=96658#p)
 
@@ -116,4 +118,14 @@ If else if..., else statements are supported via `cond`
 
 `(cond (= x 0) `one (= x 1) `one)`
 > `one`
+
+# License
+This work is licensed under a
+[Creative Commons Attribution 4.0 International License][cc-by].
+
+[![CC BY 4.0][cc-by-image]][cc-by]
+
+[cc-by]: http://creativecommons.org/licenses/by/4.0/
+[cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
+[cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
 
