@@ -64,6 +64,7 @@ function len(l)
   end
 end
 prelude = {}
+#TODO def point at prelude only, or walk __up__ to a root?
 function def(n, f, env)
   if env == nil then
     env = prelude
@@ -74,8 +75,13 @@ end
 function getval(name, env)
   assert(name ~= nil)
   assert(type(name)=="string")
-  local v = env[name]
-  return v
+  if env == nil then
+    return nil
+  elseif env[name] == nil then
+    return getval(name, env["__up__"])
+  else
+    return env[name]
+  end
 end
 def("def", def)
 def("cons", cons)
@@ -419,6 +425,7 @@ function deflst(vs, env)
     local n = first(vs)
     local v = second(vs)
     local vf= eval(v, env)
+    #TODO here we use def to define a let expression.
     def(n, vf, env)
     return deflst(
      rest(rest(vs)), env)
@@ -426,9 +433,7 @@ function deflst(vs, env)
 end
 function ns(env)
   local new = {}
-  for k,v in pairs(env) do
-    new[k] = v
-  end
+  new["__up__"] = env
   return new
 end
 def("ns", ns)
