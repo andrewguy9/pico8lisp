@@ -692,10 +692,12 @@ end
 function parse(s)
   local chars = str2cons(s)
   local out = read(chars)
-  assert(
-   second(out) ~= nil,
-   "failed to parse: "..
-    s)
+  if second(out) == nil then
+    return cons(
+     "error",
+     cons("failed to parse: ",
+       cons(s)))
+  end
   local expr = first(second(out))
   local rem = third(out)
   if rem ~= nil then
