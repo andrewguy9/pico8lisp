@@ -172,7 +172,17 @@ assert(
       str2cons("abc")))=="c")
 
 -->8
+function error(msg, form)
+  return cons("error",
+    cons(msg,
+      cons(form)))
+end
 function add_op(a,b)
+  if type(a) ~= "number" then
+    return error("not int", a)
+  elseif type(b) ~= "number" then
+    return error("not int", b)
+  end
   return a+b;
 end
 def("+", add_op)
@@ -693,18 +703,12 @@ function parse(s)
   local chars = str2cons(s)
   local out = read(chars)
   if second(out) == nil then
-    return cons(
-     "error",
-     cons("failed to parse: ",
-       cons(s)))
+    return error("failed to parse", s)
   end
   local expr = first(second(out))
   local rem = third(out)
   if rem ~= nil then
-    return cons(
-     "error",
-     cons("remaining",
-       cons(rem)))
+    return error("remaining", rem)
   else
     return cons("success", expr)
   end
