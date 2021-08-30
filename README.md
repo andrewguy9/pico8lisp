@@ -5,6 +5,11 @@ To start the interactive programming environment: `load picolisp.pb` then start 
 
 The shell is currently inflexible. If your environment crashes, restart it with `Command (⌘)-R`
 
+# Getting Started
+
+Try out Pico8Lisp on the Pico8 Website [here](https://www.lexaloffle.com/bbs/?pid=96658#p)
+
+# Language Specification:
 ## Literals
 ### Numbers
 Literal numbers are just the numbers themselves.
