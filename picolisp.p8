@@ -873,7 +873,7 @@ function repl()
              prelude))
         end
         update_line(-1, 0) -- retract the cursor
-        update_line(flr(#t/30)+1, 0)--make space for out print
+        update_line(flr(#out/30)+1, 0)--make space for out print
         print_line(out, 9)
         update_line(1, 0, nil, 0) --advance cursor to next line
         t = ""
