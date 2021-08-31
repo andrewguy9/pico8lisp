@@ -783,13 +783,22 @@ eval(
   parse(tstmacro)), prelude)
 
 -->8
-function update_line(delta,l)
-  if l == nil then
-    l = getval("l", prelude)
+function update_line(deltal, deltac, l, c)
+  if c == nil then
+    c = getval("column", prelude)
   end
-  l += delta
-  l = l % 15
-  def("l", l)
+  if l == nil then
+    l = getval("line", prelude)
+  end
+  c = max(0, c + deltac)
+  if c >= 30 then
+    deltal += 1
+  end
+  c = c % 30
+  def("column", c)
+  l += deltal
+  l = l % 16
+  def("line", l)
 end
 function grect(h,v,x,y,c)
   rectfill(h,v,h+x-1,v+y-1,c)
@@ -798,20 +807,27 @@ def("grect", grect)
 function clear_line(l)
   grect(0,l*8,128,5)
 end
-function print_line(t,c)
-  l = getval("l", prelude)
-  clear_line(l)
-  print(t,0,l*8,c)
+function print_line(t,color)
+  local l_end = getval("line", prelude)
+  local lines = flr(#t / 30)+1
+  local l_start = l_end - lines + 1
+  for l = l_start,l_end do
+    clear_line(l)
+    local cur = sub(t, 0,30)
+    t = sub(t, 30+1)
+    print(cur,0,l*8,color)
+  end
 end
-function draw_cursor(t, c)
-  l = getval("l", prelude)
-  grect(#t*4,l*8,3,5,c)
+function draw_cursor(color)
+  local l = getval("line", prelude)
+  local c = getval("column", prelude)
+  grect(c*4,l*8,3,5,color)
 end
 function clear()
-  for i=1,15 do
+  for i=1,16 do
     clear_line(i)
   end
-  update_line(0,0)
+  update_line(0,0,0,0)
 end
 def("clear", clear)
 function repl()
@@ -821,21 +837,26 @@ function repl()
   print(ins,0,0,5)
   poke(24365,1) -- mouse+key kit
   t=""
-  update_line(0,1)
+  def("column", 0)
+  update_line(0,0,1,0)
   repeat
     print_line(t,6)
-    draw_cursor(t,8)
+    draw_cursor(8)
     flip()
-    draw_cursor(t,0)
+    draw_cursor(0)
     poke(0x5f30,1) -- disable pause
+    if(btn(2)) player_y-=1--up
+    if(btn(3)) player_y+=1--down
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
         t=t..c
+        update_line(0,1)
       elseif c=="\8" then
         t = sub(t,1,#t-1)
+        update_line(0,-1)
       elseif c=="\13" then
-        update_line(1)
+        update_line(1,0,nil, 0)
         local parsed =
           parse(t)
         local out = nil
@@ -849,7 +870,7 @@ function repl()
              prelude))
         end
         print_line(out, 9)
-        update_line(1)
+        update_line(1, 0, nil, 0)
         t = ""
       end
     end
