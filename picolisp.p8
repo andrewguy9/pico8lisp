@@ -869,13 +869,11 @@ function repl()
     draw_cursor(0)
     poke(0x5f30,1) -- disable pause
     if(btnp(2)) then --up
-      sfx(1)
       update_hindex(1)
       update_line(0,-#t)
       t = get_history()
       update_line(0,#t)
     elseif(btnp(3)) then --down
-      sfx(0)
       update_hindex(-1)
       update_line(0,-#t)
       t = get_history()
