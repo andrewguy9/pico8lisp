@@ -56,6 +56,13 @@ function nth(n, l)
     return first(l)
   end
 end
+function len(l)
+  if l == nil then
+    return 0
+  else
+    return 1 + len(rest(l))
+  end
+end
 prelude = {}
 function def(n, f, env)
   if env == nil then
@@ -72,6 +79,7 @@ function getval(name, env)
 end
 def("def", def)
 def("cons", cons)
+def("len", len)
 def("first", first)
 def("nth", nth)
 def("$t", true)
@@ -833,10 +841,20 @@ function clear()
   update_line(0,0,0,0)
 end
 def("clear", clear)
+def("history", nil)
+def("hindex", -1)
+function update_hindex(delta)
+  local cnt = len(getval("history", prelude))
+  local hindex = getval("hindex", prelude)
+  hindex += delta
+  local new = max(min(cnt-1, hindex), 0)
+  def("hindex", new)
+end
+function get_history()
+  return string(nth(getval("hindex", prelude), getval("history", prelude)))
+end
 function repl()
   def("done", nil)
-  def("history", nil)
-  def("hindex", 0)
   ins = "lispo-8 repl"
   cls()
   print(ins,0,0,5)
@@ -852,15 +870,15 @@ function repl()
     poke(0x5f30,1) -- disable pause
     if(btnp(2)) then --up
       sfx(1)
-      def("hindex", getval("hindex", prelude) + 1)
+      update_hindex(1)
       update_line(0,-#t)
-      t = string(nth(getval("hindex", prelude), getval("history", prelude)))
+      t = get_history()
       update_line(0,#t)
     elseif(btnp(3)) then --down
       sfx(0)
-      def("hindex", getval("hindex", prelude) - 1)
+      update_hindex(-1)
       update_line(0,-#t)
-      t = string(nth(getval("hindex", prelude), getval("history", prelude)))
+      t = get_history()
       update_line(0,#t)
     end
     if stat(30)==true then
@@ -873,6 +891,7 @@ function repl()
         update_line(0,-1)
       elseif c=="\13" then --return
         def("history", cons(t, getval("history", prelude)))
+        def("hindex", -1)
         update_line(1,0,nil, 0)
         local parsed =
           parse(t)
