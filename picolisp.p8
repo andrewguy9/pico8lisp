@@ -790,9 +790,12 @@ function update_line(deltal, deltac, l, c)
   if l == nil then
     l = getval("line", prelude)
   end
-  c = max(0, c + deltac)
+  c = c + deltac
   if c >= 30 then
     deltal += 1
+  elseif c < 0 then
+    deltal -= 1
+    c = 30-1
   end
   c = c % 30
   def("column", c)
@@ -852,10 +855,10 @@ function repl()
       if c>=" " and c<="z" then
         t=t..c
         update_line(0,1)
-      elseif c=="\8" then
+      elseif c=="\8" and #t > 0 then --delete
         t = sub(t,1,#t-1)
         update_line(0,-1)
-      elseif c=="\13" then
+      elseif c=="\13" then --return
         update_line(1,0,nil, 0)
         local parsed =
           parse(t)
@@ -869,8 +872,10 @@ function repl()
              rest(parsed),
              prelude))
         end
+        update_line(-1, 0) -- retract the cursor
+        update_line(flr(#t/30)+1, 0)--make space for out print
         print_line(out, 9)
-        update_line(1, 0, nil, 0)
+        update_line(1, 0, nil, 0) --advance cursor to next line
         t = ""
       end
     end
@@ -1019,3 +1024,4 @@ __label__
 __sfx__
 00011f003c0503b070390603706036060350603406032060300502f0502d0502b040290502705025060240602306021060200601d0601c0701a07019070180701707016060150601306012060110600e0500c050
 0001000001050030500605007050090500c0500e0500f05011050130501405016050180501a0501b0501d0501f050210502405026050280502a0502b0502e050300503205033050350503605038050390503b050
+
