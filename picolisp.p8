@@ -847,11 +847,15 @@ function update_hindex(delta)
   local cnt = len(getval("history", prelude))
   local hindex = getval("hindex", prelude)
   hindex += delta
-  local new = max(min(cnt-1, hindex), 0)
+  local new = max(min(cnt-1, hindex), -1)
   def("hindex", new)
 end
 function get_history()
-  return string(nth(getval("hindex", prelude), getval("history", prelude)))
+  local index = getval("hindex", prelude)
+  if index < 0 then
+    return ""
+  end
+  return string(nth(index, getval("history", prelude)))
 end
 function repl()
   def("done", nil)
