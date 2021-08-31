@@ -848,8 +848,8 @@ function repl()
     flip()
     draw_cursor(0)
     poke(0x5f30,1) -- disable pause
-    if(btn(2)) player_y-=1--up
-    if(btn(3)) player_y+=1--down
+    --if(btn(2)) player_y-=1--up
+    --if(btn(3)) player_y+=1--down
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
