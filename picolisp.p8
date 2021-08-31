@@ -835,6 +835,8 @@ end
 def("clear", clear)
 function repl()
   def("done", nil)
+  def("history", nil)
+  def("hindex", 0)
   ins = "lispo-8 repl"
   cls()
   print(ins,0,0,5)
@@ -848,8 +850,19 @@ function repl()
     flip()
     draw_cursor(0)
     poke(0x5f30,1) -- disable pause
-    --if(btn(2)) player_y-=1--up
-    --if(btn(3)) player_y+=1--down
+    if(btnp(2)) then --up
+      sfx(1)
+      def("hindex", getval("hindex", prelude) + 1)
+      update_line(0,-#t)
+      t = string(nth(getval("hindex", prelude), getval("history", prelude)))
+      update_line(0,#t)
+    elseif(btnp(3)) then --down
+      sfx(0)
+      def("hindex", getval("hindex", prelude) - 1)
+      update_line(0,-#t)
+      t = string(nth(getval("hindex", prelude), getval("history", prelude)))
+      update_line(0,#t)
+    end
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
@@ -859,6 +872,7 @@ function repl()
         t = sub(t,1,#t-1)
         update_line(0,-1)
       elseif c=="\13" then --return
+        def("history", cons(t, getval("history", prelude)))
         update_line(1,0,nil, 0)
         local parsed =
           parse(t)
