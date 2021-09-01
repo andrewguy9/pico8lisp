@@ -520,8 +520,8 @@ function takepred(p,r,l)
     out = cons(acc)
   end
   return tripple(
-  chars, 
-  out, 
+  chars,
+  out,
   l)
 end
 function buildstr(a,c)

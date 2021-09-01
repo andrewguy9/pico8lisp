@@ -89,6 +89,29 @@ There is a special quote operator to make this to read.
   '(1 2 3)
 ```
 
+There are many functions which work with lists
+```
+> (empty? ())
+  $t
+> (len '(1 2 3))
+  3
+> (first '(1 2 3))
+  1
+> (second '(1 2 3))
+  2
+> (nth 2 '(1 2 3))
+  3
+> (rest '(1 2 3))
+  (2 3)
+> (reverse '(1 2 3))
+  (3 2 1)
+> (reduce + 0 '(1 2 3 4))
+  10
+> (map inc '(1 2 3))
+  (2 3 4)
+> (filter (fn (x) (= x 1)) '(1 2))
+  (1)
+```
 ### Symbols
 
 By default symbols are evaluated, but you can prevent that with quote.
