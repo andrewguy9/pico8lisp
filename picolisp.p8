@@ -899,6 +899,8 @@ function repl()
       elseif c=="\8" and #t > 0 and p > 0 then --delete
         t = remove(t, p-1)
         p -=1
+      elseif c=="\131" and #t > 0 and p > 0 then --shift d
+        t = remove(t, p)
       elseif c=="\13" then --return
         def("history", cons(t, getval("history", prelude)))
         def("hindex", -1)
