@@ -800,23 +800,6 @@ function print_line(t,color)
   end
   return dl
 end
-blink_frame = 0
-show_cursor = true
-function draw_cursor(p, color)
-  blink_frame += 1
-  if blink_frame % 20 == 0 then
-    show_cursor = not show_cursor
-  end
-  if not show_cursor then
-    return
-  end
-  local l = getval("line", prelude)
-  while p > 30 do
-    p -= 30
-    l+=1
-  end
-  grect(p*4,l*8,1,5,color)
-end
 function clear()
   for i=1,16 do
     clear_line(i)
@@ -858,9 +841,28 @@ function insert(s, pos, c)
   local postfix = sub(s, pos, #s)
   return prefix .. c .. postfix
 end
+blink_frame = 0
+show_cursor = true
+cursor_width = 1
+cursor_fn = insert
+function draw_cursor(p, color)
+  blink_frame += 1
+  if blink_frame % 20 == 0 then
+    show_cursor = not show_cursor
+  end
+  if not show_cursor then
+    return
+  end
+  local l = getval("line", prelude)
+  while p > 30 do
+    p -= 30
+    l+=1
+  end
+  grect(p*4,l*8,cursor_width,5,color)
+end
 function repl()
   def("done", nil)
-  ins = "lispo-8 repl"
+  ins = "pico8lisp repl"
   cls()
   print(ins,0,0,5)
   poke(24365,1) -- mouse+key kit
@@ -890,7 +892,7 @@ function repl()
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
-        t = insert(t, p, c)
+        t = cursor_fn(t, p, c)
         p += 1
         show_cursor = true
         blink_frame = 0
@@ -918,6 +920,14 @@ function repl()
         update_line(out_lines) --advance cursor to next line
         t = ""
         p = #t
+      elseif c == "\136" then -- cap I
+        if cursor_fn == replace then
+          cursor_fn=insert
+          cursor_width = 1
+        else
+          cursor_fn=replace
+          cursor_width = 3
+        end
       end
     end
   until getval("done", prelude)
