@@ -810,10 +810,10 @@ function print_line(t,color)
     print(cur,0,l*8,color)
   end
 end
-function draw_cursor(color)
+function draw_cursor(p, color)
   local l = getval("line", prelude)
   local c = getval("column", prelude)
-  grect(c*4,l*8,3,5,color)
+  grect(p*4,l*8,3,5,color)
 end
 function clear()
   for i=1,16 do
@@ -838,6 +838,12 @@ function get_history()
   end
   return string(nth(index, getval("history", prelude)))
 end
+function replace(s, pos, c)
+  pos = pos + 1
+  local prefix = sub(s, 0, max(0, pos - 1))
+  local postfix = sub(s, pos+1, #s)
+  return prefix .. c .. postfix
+end
 function repl()
   def("done", nil)
   ins = "lispo-8 repl"
@@ -845,32 +851,43 @@ function repl()
   print(ins,0,0,5)
   poke(24365,1) -- mouse+key kit
   t=""
+  p=0
   def("column", 0)
   update_line(0,0,1,0)
   repeat
     print_line(t,6)
-    draw_cursor(8)
+    draw_cursor(p, 8)
     flip()
-    draw_cursor(0)
+    draw_cursor(p, 0)
     poke(0x5f30,1) -- disable pause
     if(btnp(2)) then --up
       update_hindex(1)
       update_line(0,-#t)
       t = get_history()
+      p = #t
       update_line(0,#t)
     elseif(btnp(3)) then --down
       update_hindex(-1)
       update_line(0,-#t)
       t = get_history()
+      p = #t
       update_line(0,#t)
+    elseif(btnp(1)) then --right
+      p = min(p+1, #t)
+      -- update_line(0,1)
+    elseif(btnp(0)) then --left
+      p = max(p-1, 0)
+      -- update_line(0,-1)
     end
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
-        t=t..c
+        t = replace(t, p, c)
+        p += 1
         update_line(0,1)
       elseif c=="\8" and #t > 0 then --delete
         t = sub(t,1,#t-1)
+        p = #t
         update_line(0,-1)
       elseif c=="\13" then --return
         def("history", cons(t, getval("history", prelude)))
@@ -893,6 +910,7 @@ function repl()
         print_line(out, 9)
         update_line(1, 0, nil, 0) --advance cursor to next line
         t = ""
+        p = #t
       end
     end
   until getval("done", prelude)
