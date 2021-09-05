@@ -208,9 +208,11 @@ Supported logic operators:
 
 Examples
 ```
-`> (and nil 1)
+> (= 1 1)
+  $t
+> (= 1 2)
   ()
-> (or nil 1)
+> (= '(1 2) '(1 2))
   $t
 > (! nil)
   $t
@@ -218,6 +220,10 @@ Examples
   nil
 > (! 1)
   nil
+`> (and nil 1)
+  ()
+> (or nil 1)
+  $t
 ```
 
 # License

@@ -204,7 +204,24 @@ function eq_op(a,b)
     return nil
   end
 end
-def("=", eq_op)
+function equals(a,b)
+  if type(a) ~= type(b) then
+    return nil
+  elseif type(a) == "table" then
+    if isempty(a) and isempty(b) then
+      return "bothempty" -- true
+    elseif isempty(a) or isempty(b) then
+      return nil
+    elseif equals(first(a), first(b)) == true then
+      return equals(rest(a), rest(b))
+    else
+      return nil
+    end
+  else
+    return eq_op(a,b)
+  end
+end
+def("=", equals)
 function not_op(a)
   if a == nil then
     return true
