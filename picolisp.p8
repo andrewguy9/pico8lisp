@@ -772,22 +772,10 @@ eval(
   parse(tstmacro)), prelude)
 
 -->8
-function update_line(deltal, deltac, l, c)
-  if c == nil then
-    c = getval("column", prelude)
-  end
+function update_line(deltal, l)
   if l == nil then
     l = getval("line", prelude)
   end
-  c = c + deltac
-  if c >= 30 then
-    deltal += 1
-  elseif c < 0 then
-    deltal -= 1
-    c = 30-1
-  end
-  c = c % 30
-  def("column", c)
   l += deltal
   l = l % 16
   def("line", l)
@@ -800,26 +788,23 @@ function clear_line(l)
   grect(0,l*8,128,5)
 end
 function print_line(t,color)
-  local l_end = getval("line", prelude)
-  local lines = flr(#t / 30)+1
-  local l_start = l_end - lines + 1
-  for l = l_start,l_end do
-    clear_line(l)
-    local cur = sub(t, 0,30)
-    t = sub(t, 30+1)
-    print(cur,0,l*8,color)
-  end
-end
-function draw_cursor(color)
   local l = getval("line", prelude)
-  local c = getval("column", prelude)
-  grect(c*4,l*8,3,5,color)
+  local dl = 0
+  clear_line(l+dl)
+  while #t > 0 do
+    local cur = sub(t,0,30)
+    t = sub(t, 30+1)
+    clear_line(l+dl)
+    print(cur,0,(l+dl)*8,color)
+    dl+=1
+  end
+  return dl
 end
 function clear()
   for i=1,16 do
     clear_line(i)
   end
-  update_line(0,0,0,0)
+  update_line(0,0)
 end
 def("clear", clear)
 def("history", nil)
@@ -838,44 +823,89 @@ function get_history()
   end
   return string(nth(index, getval("history", prelude)))
 end
+function remove(s, pos)
+  pos = pos + 1
+  local prefix = sub(s, 0, max(0, pos - 1))
+  local postfix = sub(s, pos+1, #s)
+  return prefix .. postfix
+end
+function replace(s, pos, c)
+  pos = pos + 1
+  local prefix = sub(s, 0, max(0, pos - 1))
+  local postfix = sub(s, pos+1, #s)
+  return prefix .. c .. postfix
+end
+function insert(s, pos, c)
+  pos = pos + 1
+  local prefix = sub(s, 0, max(0, pos - 1))
+  local postfix = sub(s, pos, #s)
+  return prefix .. c .. postfix
+end
+blink_frame = 0
+show_cursor = true
+cursor_width = 1
+cursor_fn = insert
+function draw_cursor(p, color)
+  blink_frame += 1
+  if blink_frame % 20 == 0 then
+    show_cursor = not show_cursor
+  end
+  if not show_cursor then
+    return
+  end
+  local l = getval("line", prelude)
+  while p > 30 do
+    p -= 30
+    l+=1
+  end
+  grect(p*4,l*8,cursor_width,5,color)
+end
 function repl()
   def("done", nil)
-  ins = "lispo-8 repl"
+  ins = "pico8lisp repl"
   cls()
   print(ins,0,0,5)
   poke(24365,1) -- mouse+key kit
   t=""
+  p=0
   def("column", 0)
-  update_line(0,0,1,0)
+  update_line(0,1)
   repeat
-    print_line(t,6)
-    draw_cursor(8)
+    local t_lines = print_line(t,6)
+    draw_cursor(p, 8)
     flip()
-    draw_cursor(0)
+    draw_cursor(p, 0) -- erase cursor
     poke(0x5f30,1) -- disable pause
     if(btnp(2)) then --up
       update_hindex(1)
-      update_line(0,-#t)
       t = get_history()
-      update_line(0,#t)
+      p = #t
     elseif(btnp(3)) then --down
       update_hindex(-1)
-      update_line(0,-#t)
       t = get_history()
-      update_line(0,#t)
+      p = #t
+    elseif(btnp(1)) then --right
+      p = min(p+1, #t)
+    elseif(btnp(0)) then --left
+      p = max(p-1, 0)
     end
     if stat(30)==true then
       c=stat(31)
       if c>=" " and c<="z" then
-        t=t..c
-        update_line(0,1)
-      elseif c=="\8" and #t > 0 then --delete
-        t = sub(t,1,#t-1)
-        update_line(0,-1)
+        t = cursor_fn(t, p, c)
+        p += 1
+        show_cursor = true
+        blink_frame = 0
+      elseif c=="\8" and #t > 0 and p > 0 then --delete
+        t = remove(t, p-1)
+        p -=1
+      elseif c=="\131" and #t > 0 and p > 0 then --shift d
+        t = remove(t, p)
       elseif c=="\13" then --return
         def("history", cons(t, getval("history", prelude)))
         def("hindex", -1)
-        update_line(1,0,nil, 0)
+        update_line(t_lines)
+        p = 0
         local parsed =
           parse(t)
         local out = nil
@@ -888,11 +918,18 @@ function repl()
              rest(parsed),
              prelude))
         end
-        update_line(-1, 0) -- retract the cursor
-        update_line(flr(#out/30)+1, 0)--make space for out print
-        print_line(out, 9)
-        update_line(1, 0, nil, 0) --advance cursor to next line
+        local out_lines = print_line(out, 9)
+        update_line(out_lines) --advance cursor to next line
         t = ""
+        p = #t
+      elseif c == "\136" then -- cap I
+        if cursor_fn == replace then
+          cursor_fn=insert
+          cursor_width = 1
+        else
+          cursor_fn=replace
+          cursor_width = 3
+        end
       end
     end
   until getval("done", prelude)
