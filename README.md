@@ -28,9 +28,11 @@ Press up and down to scroll through your command history.
 Press left and right to move the cursor.
 
 `<backspace>` will remove the character to the left of the cursor.
+
 `<shift>-d` will remove the character to the right of the cursor.
 
 Toggle between insert and replace modes by pressing `<shift>-I`.
+
 ![Replace](replace.gif) ![Insert](insert.gif)
 
 # Language Specification:
