@@ -160,25 +160,6 @@ assert(
   == "zzzabc")
 def("str2cons", str2cons)
 def("cons2str", cons2str)
-
-function reverse(l)
-  o = nil
-  while not isempty(l) do
-    o = cons(first(l), o)
-    l = rest(l)
-  end
-  return o
-end 
-assert(reverse(nil) == nil)
-assert(
-  first(
-    reverse(
-      cons(1,nil))) == 1)
-assert(
-  first(
-    reverse(
-      str2cons("abc")))=="c")
-
 -->8
 function error(msg, form)
   return cons("error",
@@ -539,8 +520,8 @@ function takepred(p,r,l)
     out = cons(acc)
   end
   return tripple(
-  chars, 
-  out, 
+  chars,
+  out,
   l)
 end
 function buildstr(a,c)
@@ -765,22 +746,22 @@ assert(
   == "(13 ((abc 123)) ())")
 def("print", print)
 
-defnmacro= "(def defn (macro (name args impl) `('def name `('fn args impl))))"
-eval(
- rest(
-  parse(defnmacro)), prelude)
-inc="(defn inc (x) (+ x 1))"
-eval(
- rest(
-  parse(inc)), prelude)
-defmacro="(def defmacro (macro (name args impl) `('def name `('macro args impl))))"
-eval(
- rest(
-  parse(defmacro)), prelude)
-ifmacro= "(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))"
-eval(
- rest(
-  parse(ifmacro)), prelude)
+function inject(expr)
+  eval(
+   rest(
+    parse(expr)), prelude)
+end
+
+inject("(def defn (macro (name args impl) `('def name `('fn args impl))))")
+inject("(defn inc (x) (+ x 1))")
+inject("(def defmacro (macro (name args impl) `('def name `('macro args impl))))")
+inject("(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))")
+inject("(defmacro and (a b) `('if a `('if b '$t 'nil) 'nil))")
+inject("(defmacro or (a b) `('if a '$t `('if b '$t 'nil)))")
+inject("(defn reverse (l o) (if l (reverse (rest l) (cons (first l) o)) o))")
+inject("(defn reduce (f a c) (if c (reduce f (f (first c) a) (rest c)) a))")
+inject("(defn map (f c) (if c (cons (f (first c)) (map f (rest c))) nil))")
+inject("(defn filter (p c) (if c (if (p (first c)) (cons (first c) (filter p (rest c))) (filter p (rest c))) nil))")
 
 def("pass", 0, prelude)
 def("fail", 0, prelude)
