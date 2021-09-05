@@ -23,9 +23,9 @@ You can type commands directly into the shell.
 
 `<return>` submits the command.
 
-Press up and down to scroll through your command history.
+Press `<up>` and `<down>` to scroll through your command history.
 
-Press left and right to move the cursor.
+Press `<left>` and `<right>` to move the cursor.
 
 `<backspace>` will remove the character to the left of the cursor.
 
