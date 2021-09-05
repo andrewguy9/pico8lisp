@@ -90,7 +90,7 @@ You can even nest list expressions.
 Supported Numeric Functions
 * `+` plus
 * `-` subtract
-* `*` multiple
+* `*` multiply
 * `/` divide
 * `%` modulus
 
