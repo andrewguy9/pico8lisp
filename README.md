@@ -13,7 +13,7 @@ Try out Pico8Lisp on the Pico8 Website [here](https://www.lexaloffle.com/bbs/?pi
 
 [![Pico8Lisp Cartrage](pico8lisp.p8.png)](https://www.lexaloffle.com/bbs/?pid=96658#p)
 
-# Using the repl.
+# Using the REPL
 
 You can type commands directly into the shell.
 ```
