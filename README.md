@@ -13,6 +13,28 @@ Try out Pico8Lisp on the Pico8 Website [here](https://www.lexaloffle.com/bbs/?pi
 
 [![Pico8Lisp Cartrage](pico8lisp.p8.png)](https://www.lexaloffle.com/bbs/?pid=96658#p)
 
+Using the repl.
+
+You can type commands directly into the shell.
+```
+> (+ 1 2)
+  3
+```
+
+`<return>` submits the command.
+
+Press up and down to scroll through your command history.
+
+Press left and right to move the cursor.
+
+`<backspace>` will remove the character to the left of the cursor.
+
+`<shift>-d` will remove the character to the right of the cursor.
+
+Toggle between insert and replace modes by pressing `<shift>-I`.
+
+![Insert](insert.gif) ![Replace](replace.gif)
+
 # Language Specification:
 ## Literals
 ### Numbers
@@ -170,6 +192,8 @@ If else if..., else statements are supported via cond
 ```
 
 `and` and `or` are also supported.
+
+```
 `> (and nil 1)
   ()
 > (or nil 1)
@@ -177,6 +201,7 @@ If else if..., else statements are supported via cond
 ```
 
 # License
+
 This work is licensed under a
 [Creative Commons Attribution 4.0 International License][cc-by].
 
@@ -185,4 +210,5 @@ This work is licensed under a
 [cc-by]: http://creativecommons.org/licenses/by/4.0/
 [cc-by-image]: https://i.creativecommons.org/l/by/4.0/88x31.png
 [cc-by-shield]: https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg
+
 
