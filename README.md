@@ -169,6 +169,13 @@ If else if..., else statements are supported via cond
   one
 ```
 
+`and` and `or` are also supported.
+`> (and nil 1)
+  ()
+> (or nil 1)
+  $t
+```
+
 # License
 This work is licensed under a
 [Creative Commons Attribution 4.0 International License][cc-by].
