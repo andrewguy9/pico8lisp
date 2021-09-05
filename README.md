@@ -13,6 +13,22 @@ Try out Pico8Lisp on the Pico8 Website [here](https://www.lexaloffle.com/bbs/?pi
 
 [![Pico8Lisp Cartrage](pico8lisp.p8.png)](https://www.lexaloffle.com/bbs/?pid=96658#p)
 
+Using the repl.
+
+You can type commands directly into the shell.
+```
+> (+ 1 2)
+  3
+```
+
+`<return>` submits the command.
+
+Press up and down to scroll through your command history.
+
+Press left and right to move the cursor.
+You can toggle between insert and replace modes by pressing `<shift>-I`.
+![Replace](replace.gif) ![Insert](insert.gif)
+
 # Language Specification:
 ## Literals
 ### Numbers
