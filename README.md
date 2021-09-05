@@ -36,8 +36,11 @@ Toggle between insert and replace modes by pressing `<shift>-I`.
 ![Insert](insert.gif) ![Replace](replace.gif)
 
 # Language Specification:
+
 ## Literals
+
 ### Numbers
+
 Literal numbers are just the numbers themselves.
 
 ```
