@@ -87,7 +87,12 @@ You can even nest list expressions.
   6
 ```
 
-At the moment, we only have +.
+Supported Numeric Functions
+* `+` plus
+* `-` subtract
+* `*` multiply
+* `/` divide
+* `%` modulus
 
 ### Clear screen
 If your repl gets confusing, clear the screen
@@ -194,9 +199,27 @@ If else if..., else statements are supported via cond
   one
 ```
 
-`and` and `or` are also supported.
+Supported logic operators:
+* `=` equals check
+* `!` not
+* `and` logical and
+* `or` logical or
+* ``
 
+Examples
 ```
+> (= 1 1)
+  $t
+> (= 1 2)
+  ()
+> (= '(1 2) '(1 2))
+  $t
+> (! nil)
+  $t
+> (! $t)
+  nil
+> (! 1)
+  nil
 `> (and nil 1)
   ()
 > (or nil 1)
