@@ -18,13 +18,9 @@ function isempty(l)
       tostring(l))
   end
 end
-assert(isempty(nil) == true)
-assert(
-  isempty(cons(1, nil))
-  == false)
-assert(
-  isempty(cons(nil, nil))
-  == false)
+assert(isempty(nil))
+assert( not isempty(cons(1, nil)))
+assert(not isempty(cons(nil, nil)))
 function first(l)
   if isempty(l) then
     return nil
@@ -85,8 +81,7 @@ def("nth", nth)
 def("$t", true)
 def("nil", nil)
 def("empty?", isempty)
-assert(getval("$t", prelude)
- == true)
+assert(getval("$t", prelude))
 function defzip(
  binds, vals, env)
   assert(env ~= nil)
@@ -114,7 +109,7 @@ function second(l)
 end
 assert(second(nil) == nil)
 assert(second(
-  cons(1, nil)) == nil)  
+  cons(1, nil)) == nil)
 assert(second(
   cons(1, cons(2, nil))) == 2)
 assert(second(
@@ -177,6 +172,13 @@ function check_numbers(op)
   end
   return checked
 end
+function bool(b)
+  if b == false or b == nil then
+    return nil
+  else
+    return "$t"
+  end
+end
 function add_op(a,b)
   return a+b;
 end
@@ -192,17 +194,21 @@ end
 function mod_op(a,b)
   return a%b;
 end
+function gt_op(a,b)
+  return bool(a>b)
+end
+function lt_op(a,b)
+  return bool(a<b)
+end
 def("+", check_numbers(add_op))
 def("-", check_numbers(sub_op))
 def("*", check_numbers(mul_op))
 def("/", check_numbers(div_op))
 def("%", check_numbers(mod_op))
+def(">", check_numbers(gt_op))
+def("<", check_numbers(lt_op))
 function eq_op(a,b)
-  if a==b then
-    return true
-  else
-    return nil
-  end
+  return bool(a==b)
 end
 function equals(a,b)
   if type(a) ~= type(b) then
@@ -212,7 +218,7 @@ function equals(a,b)
       return "bothempty" -- true
     elseif isempty(a) or isempty(b) then
       return nil
-    elseif equals(first(a), first(b)) == true then
+    elseif equals(first(a), first(b)) then
       return equals(rest(a), rest(b))
     else
       return nil
@@ -233,38 +239,34 @@ def("!", not_op)
 function native(e)
   return type(e) == "function"
 end
-assert(native(1) == false)
-assert(native(cons) == true)
+assert(not native(1))
+assert(native(cons))
 def("native", native)
 def("cls", cls)
 function islist(e)
-  if type(e) == "table" then
-    return true
-  elseif e == nil then
-    return true
-  else
-    return false
-  end
+  return bool(e == nil or type(e) == "table")
 end
-assert(islist(1) == false)
-assert(islist(nil) == true)
-assert(islist(cons(1,nil)) == true)
+assert(not islist(1))
+assert(islist(nil))
+assert(islist(cons(1,nil)))
 def("list?", islist)
 function isnum(e)
-  return type(e) == "number"
+  return bool(type(e) == "number")
 end
-assert(isnum(1) == true)
-assert(isnum(nil) == false)
-assert(isnum("a") == false)
+assert(isnum(1))
+assert(not isnum(nil))
+assert(not isnum("a"))
 def("num?", isnum)
 function issym(e)
-  return type(e) == "string"
+  return bool(type(e) == "string")
 end
-assert(issym(1) == false)
-assert(issym("a") == true)
+assert(not issym(1))
+assert(issym("a"))
+assert(not issym(nil))
+assert(issym("abc"))
 def("sym?", issym)
-assert(issym(nil) == false)
-assert(issym("abc") == true)
+--TODO isalpha not in repl
+--TODO isalpha has weird semantics and throws.
 function isalpha(c)
   assert(type(c) == "string"
       or c == nil,
@@ -278,6 +280,7 @@ function isalpha(c)
       c~= " "
   end
 end
+-- TODO remove == true or == false
 assert(isalpha(nil) == false)
 assert(isalpha("a") == true)
 assert(isalpha("z") == true)
@@ -292,6 +295,7 @@ function iswhite(c)
     return c == " "
   end
 end
+-- TODO remove == true or == false
 assert(iswhite(nil) == false)
 assert(iswhite("a") == false)
 assert(iswhite(" ") == true)
@@ -354,7 +358,7 @@ function string(form)
   elseif native(form) then
     return "native"
   elseif isbool(form) then
-    if form == true then
+    if form then
       return "$t"
     else
       assert(
@@ -508,8 +512,9 @@ function eval(form, env)
       return apply(fst, rst, env)
     end
   else -- not a list
-    if form == true then
-      return true
+    -- TODO use isbool
+    if isbool(form) then
+      return form
     elseif isnum(form) then
       return form
     elseif native(form) then
@@ -800,6 +805,8 @@ inject("(defn reverse (l o) (if l (reverse (rest l) (cons (first l) o)) o))")
 inject("(defn reduce (f a c) (if c (reduce f (f (first c) a) (rest c)) a))")
 inject("(defn map (f c) (if c (cons (f (first c)) (map f (rest c))) nil))")
 inject("(defn filter (p c) (if c (if (p (first c)) (cons (first c) (filter p (rest c))) (filter p (rest c))) nil))")
+inject("(defn >= (a b) (or (> a b) (= a b)))")
+inject("(defn <= (a b) (or (< a b) (= a b)))")
 
 def("pass", 0, prelude)
 def("fail", 0, prelude)

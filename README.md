@@ -201,6 +201,8 @@ If else if..., else statements are supported via cond
 
 Supported logic operators:
 * `=` equals check
+* `>` `>=` greater than (equals) *numbers only*
+* `<` `<=` less than (equals) *numbers only*
 * `!` not
 * `and` logical and
 * `or` logical or
@@ -210,7 +212,7 @@ Examples
 ```
 > (= 1 1)
   $t
-> (= 1 2)
+> (> 1 2)
   ()
 > (= '(1 2) '(1 2))
   $t
