@@ -172,15 +172,37 @@ function error(msg, form)
     cons(msg,
       cons(form)))
 end
-function add_op(a,b)
-  if type(a) ~= "number" then
-    return error("not int", a)
-  elseif type(b) ~= "number" then
-    return error("not int", b)
+function check_numbers(op)
+  function checked(a,b)
+    if type(a) ~= "number" then
+      return error("not int", a)
+    elseif type(b) ~= "number" then
+      return error("not int", b)
+    end
+    return op(a,b)
   end
+  return checked
+end
+function add_op(a,b)
   return a+b;
 end
-def("+", add_op)
+function sub_op(a,b)
+  return a-b;
+end
+function mul_op(a,b)
+  return a*b;
+end
+function div_op(a,b)
+  return a/b;
+end
+function mod_op(a,b)
+  return a%b;
+end
+def("+", check_numbers(add_op))
+def("-", check_numbers(sub_op))
+def("*", check_numbers(mul_op))
+def("/", check_numbers(div_op))
+def("%", check_numbers(mod_op))
 function eq_op(a,b)
   if a==b then
     return true
@@ -188,7 +210,24 @@ function eq_op(a,b)
     return nil
   end
 end
-def("=", eq_op)
+function equals(a,b)
+  if type(a) ~= type(b) then
+    return nil
+  elseif type(a) == "table" then
+    if isempty(a) and isempty(b) then
+      return "bothempty" -- true
+    elseif isempty(a) or isempty(b) then
+      return nil
+    elseif equals(first(a), first(b)) == true then
+      return equals(rest(a), rest(b))
+    else
+      return nil
+    end
+  else
+    return eq_op(a,b)
+  end
+end
+def("=", equals)
 function not_op(a)
   if a == nil then
     return true
@@ -493,7 +532,6 @@ assert(apply(
   cons(1, cons(2, nil)),
   prelude) == 3)
 assert(eval(1) == 1)
-assert(eval("+", prelude) == add_op)
 assert(eval(nil) == nil)
 -- (+ 1 2)
 assert(
@@ -1082,4 +1120,3 @@ __label__
 __sfx__
 00011f003c0503b070390603706036060350603406032060300502f0502d0502b040290502705025060240602306021060200601d0601c0701a07019070180701707016060150601306012060110600e0500c050
 0001000001050030500605007050090500c0500e0500f05011050130501405016050180501a0501b0501d0501f050210502405026050280502a0502b0502e050300503205033050350503605038050390503b050
-
