@@ -85,8 +85,10 @@ assert(getval("$t", prelude))
 function defzip(
  binds, vals, env)
   assert(env ~= nil)
-  if binds == nil then
+  if binds == nil and vals == nil then
     return env
+  elseif binds == nil or vals == nil then
+    return error("variadic mismatch", binds or vals)
   else
     def(
      first(binds),
@@ -160,6 +162,9 @@ function error(msg, form)
   return cons("error",
     cons(msg,
       cons(form)))
+end
+function iserror(form)
+  return bool(islist(form) and first(form) == "error")
 end
 function check_numbers(op)
   function checked(a,b)
@@ -397,6 +402,9 @@ function evfn(fn, args, env)
   local envf = defzip(
    binds, args, copy)
   assert(envf ~= nil)
+  if iserror(envf) then
+    return envf
+  end
   return eval(forms, envf)
 end
 function evlist(l, env)
