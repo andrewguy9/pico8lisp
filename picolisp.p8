@@ -973,9 +973,17 @@ function repl()
       elseif c == "\132" then -- cap E (end of line)
         p = #t
       elseif c == "\133" then -- cap F (forward 1 token)
-        p = min(p + 1, #t)
+        p+=1
+        while sub(t, p+1, p+1) != ")" and p < #t do
+          p = p + 1
+        end
+        p = min(#t, p)
       elseif c == "\129" then -- cap B (back 1 token)
-        p = max(p - 1, 0)
+        p-=1
+        while sub(t, p, p) != "(" and p > 0 do
+          p = p - 1
+        end
+        p = max(0, p)
       end
     end
   until getval("done", prelude)
