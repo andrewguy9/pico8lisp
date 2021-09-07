@@ -89,7 +89,7 @@ function defzip(
     return env
   else
     def(
-     first(binds), 
+     first(binds),
      first(vals),
      env)
     return defzip(
@@ -807,6 +807,8 @@ inject("(defn map (f c) (if c (cons (f (first c)) (map f (rest c))) nil))")
 inject("(defn filter (p c) (if c (if (p (first c)) (cons (first c) (filter p (rest c))) (filter p (rest c))) nil))")
 inject("(defn >= (a b) (or (> a b) (= a b)))")
 inject("(defn <= (a b) (or (< a b) (= a b)))")
+inject("(defn even? (x) (= 0 (% x 2)))")
+inject("(defn every? (p c) (if c (if (p (first c)) (every? p (rest c)) nil) $t))")
 
 def("pass", 0, prelude)
 def("fail", 0, prelude)
