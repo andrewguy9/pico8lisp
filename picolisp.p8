@@ -205,13 +205,13 @@ end
 function lt_op(a,b)
   return bool(a<b)
 end
-def("+", check_numbers(add_op))
-def("-", check_numbers(sub_op))
-def("*", check_numbers(mul_op))
-def("/", check_numbers(div_op))
-def("%", check_numbers(mod_op))
-def(">", check_numbers(gt_op))
-def("<", check_numbers(lt_op))
+def("add_op", check_numbers(add_op))
+def("sub_op", check_numbers(sub_op))
+def("mul_op", check_numbers(mul_op))
+def("div_op", check_numbers(div_op))
+def("mod_op", check_numbers(mod_op))
+def("gt_op", check_numbers(gt_op))
+def("lt_op", check_numbers(lt_op))
 function eq_op(a,b)
   return bool(a==b)
 end
@@ -535,10 +535,6 @@ end
 assert(apply(
   add_op,
   cons(1, cons(2, nil))) == 3)
-assert(apply(
-  "+",
-  cons(1, cons(2, nil)),
-  prelude) == 3)
 assert(eval(1) == 1)
 assert(eval(nil) == nil)
 -- (+ 1 2)
@@ -802,8 +798,14 @@ function inject(expr)
    rest(
     parse(expr)), prelude)
 end
-
 inject("(def defn (macro (name args impl) `('def name `('fn args impl))))")
+inject("(defn + (a b) (add_op a b))")
+inject("(defn - (a b) (sub_op a b))")
+inject("(defn * (a b) (mul_op a b))")
+inject("(defn / (a b) (div_op a b))")
+inject("(defn % (a b) (mod_op a b))")
+inject("(defn > (a b) (gt_op a b))")
+inject("(defn < (a b) (lt_op a b))")
 inject("(defn inc (x) (+ x 1))")
 inject("(def defmacro (macro (name args impl) `('def name `('macro args impl))))")
 inject("(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))")
@@ -813,10 +815,10 @@ inject("(defn reverse (l o) (if l (reverse (rest l) (cons (first l) o)) o))")
 inject("(defn reduce (f a c) (if c (reduce f (f (first c) a) (rest c)) a))")
 inject("(defn map (f c) (if c (cons (f (first c)) (map f (rest c))) nil))")
 inject("(defn filter (p c) (if c (if (p (first c)) (cons (first c) (filter p (rest c))) (filter p (rest c))) nil))")
-inject("(defn >= (a b) (or (> a b) (= a b)))")
-inject("(defn <= (a b) (or (< a b) (= a b)))")
 inject("(defn even? (x) (= 0 (% x 2)))")
 inject("(defn every? (p c) (if c (if (p (first c)) (every? p (rest c)) nil) $t))")
+inject("(defn >= (a b) (or (> a b) (= a b)))")
+inject("(defn <= (a b) (or (< a b) (= a b)))")
 
 def("pass", 0, prelude)
 def("fail", 0, prelude)
