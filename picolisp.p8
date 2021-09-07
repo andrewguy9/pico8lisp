@@ -968,6 +968,14 @@ function repl()
           cursor_fn=replace
           cursor_width = 3
         end
+      elseif c == "\128" then -- cap A (start of line)
+        p = 0
+      elseif c == "\132" then -- cap E (end of line)
+        p = #t
+      elseif c == "\133" then -- cap F (forward 1 token)
+        p = min(p + 1, #t)
+      elseif c == "\129" then -- cap B (back 1 token)
+        p = max(p - 1, 0)
       end
     end
   until getval("done", prelude)
