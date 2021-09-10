@@ -215,7 +215,7 @@ def("lt_op", check_numbers(lt_op))
 function eq_op(a,b)
   return bool(a==b)
 end
-function equals(a,b)
+function equals_op(a,b)
   if type(a) ~= type(b) then
     return nil
   elseif type(a) == "table" then
@@ -232,7 +232,7 @@ function equals(a,b)
     return eq_op(a,b)
   end
 end
-def("=", equals)
+def("equals_op", equals_op)
 function not_op(a)
   if a == nil then
     return true
@@ -817,6 +817,7 @@ inject("(defn map (f c) (if c (cons (f (first c)) (map f (rest c))) nil))")
 inject("(defn filter (p c) (if c (if (p (first c)) (cons (first c) (filter p (rest c))) (filter p (rest c))) nil))")
 inject("(defn even? (x) (= 0 (% x 2)))")
 inject("(defn every? (p c) (if c (if (p (first c)) (every? p (rest c)) nil) $t))")
+inject("(defn = (a b) (equals_op a b))")
 inject("(defn >= (a b) (or (> a b) (= a b)))")
 inject("(defn <= (a b) (or (< a b) (= a b)))")
 
