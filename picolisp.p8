@@ -73,6 +73,13 @@ function getval(name, env)
   local v = env[name]
   return v
 end
+function native_wrapper(nargs, native)
+  assert(nargs == 2)
+  local args = cons("a", cons("b"))
+  local impl = cons(native, args)
+  local fn = cons("fn", cons(args, cons(impl)))
+  return fn
+end
 def("def", def)
 def("cons", cons)
 def("len", len)
