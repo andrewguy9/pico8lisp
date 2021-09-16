@@ -59,6 +59,20 @@ function len(l)
     return 1 + len(rest(l))
   end
 end
+function pair(a, b)
+  return cons(a, cons(b))
+end
+function tripple(a,b,c)
+  return cons(a, pair(b,c))
+end
+function str2cons(str)
+  local t = split(str, "", false)
+  local l = nil
+  for i=count(t),1,-1 do
+    l = cons(t[i], l)
+  end
+  return l
+end
 prelude = {}
 function def(n, f, env)
   if env == nil then
@@ -80,14 +94,24 @@ function native_wrapper(nargs, native)
   local fn = cons("fn", cons(args, cons(impl)))
   return fn
 end
-def("def", def)
-def("cons", cons)
-def("len", len)
-def("first", first)
-def("nth", nth)
+arg1 = cons("a")
+arg2 = cons("b", cons("a"))
+function defnative(name, binds, native)
+  return def(name, tripple("native", binds, native), prelude)
+end
+args1 = cons("a")
+args2 = pair("a", "b")
+args3 = tripple("a", "b", "c")
+defnative("def", args2, def)
+defnative("cons", args2, cons)
+defnative("len", args1, len)
+defnative("first", args1, first)
+defnative("nth", args2, nth)
+defnative("pair", args2, pair)
+defnative("tripple", args3, tripple)
 def("$t", true)
 def("nil", nil)
-def("empty?", isempty)
+defnative("empty?", args1, isempty)
 assert(getval("$t", prelude))
 function defzip(
  binds, vals, env)
@@ -124,29 +148,10 @@ assert(second(
 assert(second(
   cons(1, cons(2, cons(3, nil))))
   == 2)
-def("second", second)
-def("rest", rest)
+defnative("second", arg1, second)
+defnative("rest", arg1, rest)
 function third(l)
   return first(rest(rest(l)))
-end
-function pair(a, b)
-  return cons(a, cons(b))
-end
-def("pair", pair)
-function tripple(a,b,c)
-  return cons(
-   a, cons(
-    b, cons(
-     c)))
-end
-def("tripple", tripple)
-function str2cons(str)
-  local t = split(str, "", false)
-  local l = nil
-  for i=count(t),1,-1 do
-    l = cons(t[i], l)
-  end
-  return l
 end
 function cons2str(l,s)
   if isempty(l) then
@@ -162,8 +167,8 @@ assert(
     str2cons("abc"),
   "zzz")
   == "zzzabc")
-def("str2cons", str2cons)
-def("cons2str", cons2str)
+defnative("str2cons", args1, str2cons)
+defnative("cons2str", args1, cons2str)
 -->8
 function error(msg, form)
   return cons("error",
@@ -212,13 +217,13 @@ end
 function lt_op(a,b)
   return bool(a<b)
 end
-def("add_op", check_numbers(add_op))
-def("sub_op", check_numbers(sub_op))
-def("mul_op", check_numbers(mul_op))
-def("div_op", check_numbers(div_op))
-def("mod_op", check_numbers(mod_op))
-def("gt_op", check_numbers(gt_op))
-def("lt_op", check_numbers(lt_op))
+defnative("+", args2,  check_numbers(add_op))
+defnative("-", args2,  check_numbers(sub_op))
+defnative("*", args2,  check_numbers(mul_op))
+defnative("/", args2,  check_numbers(div_op))
+defnative("%", args2,  check_numbers(mod_op))
+defnative(">", args2,  check_numbers(gt_op))
+defnative("<", args2,  check_numbers(lt_op))
 function eq_op(a,b)
   return bool(a==b)
 end
@@ -239,7 +244,7 @@ function equals_op(a,b)
     return eq_op(a,b)
   end
 end
-def("equals_op", equals_op)
+defnative("equals_op", args2, equals_op)
 function not_op(a)
   if a == nil then
     return true
@@ -247,28 +252,26 @@ function not_op(a)
     return nil
   end
 end
-def("!", not_op)
+defnative("!", args1, not_op)
 function native(e)
   return type(e) == "function"
 end
 assert(not native(1))
 assert(native(cons))
-def("native", native)
-def("cls", cls)
 function islist(e)
   return bool(e == nil or type(e) == "table")
 end
 assert(not islist(1))
 assert(islist(nil))
 assert(islist(cons(1,nil)))
-def("list?", islist)
+defnative("list?", args1, islist)
 function isnum(e)
   return bool(type(e) == "number")
 end
 assert(isnum(1))
 assert(not isnum(nil))
 assert(not isnum("a"))
-def("num?", isnum)
+defnative("num?", args1, isnum)
 function issym(e)
   return bool(type(e) == "string")
 end
@@ -276,7 +279,7 @@ assert(not issym(1))
 assert(issym("a"))
 assert(not issym(nil))
 assert(issym("abc"))
-def("sym?", issym)
+defnative("sym?", args1, issym)
 --TODO isalpha not in repl
 --TODO isalpha has weird semantics and throws.
 function isalpha(c)
@@ -337,7 +340,7 @@ assert(count(
   decons(
     cons(1,
       cons(2, nil)))) == 2)
-def("decons", decons)
+defnative("decons", args1, decons)
 function stringseq(seq)
   if seq == nil then
     return ""
@@ -368,7 +371,7 @@ function string(form)
   elseif issym(form) then
     return form
   elseif native(form) then
-    return "native"
+    return sub(tostring(form), 10)
   elseif isbool(form) then
     if form then
       return "$t"
@@ -383,8 +386,8 @@ function string(form)
   else
     assert(false, type(form))
   end
-end 
-assert(string(add_op) == "native")
+end
+assert(string(add_op) == sub(tostring(add_op), 10))
 assert(string(1) == "1")
 assert(string("a") == "a")
 assert(string(nil) == "()")
@@ -397,6 +400,17 @@ assert(
 
 
 -->8
+function evnative(fn, args, env)
+  local binds = second(fn)
+  local forms = third(fn)
+  local copy = ns(env)
+  local envf = defzip(binds, args, copy)
+  if iserror(envf) then
+    return envf
+  end
+  args = decons(args)
+  return forms(unpack(args))
+end
 -- ((fn (a b) (+ a b)) 1 2)
 --fn                 args  env
 --(fn (a b) (+ a b)) (1 2) (.)
@@ -434,10 +448,9 @@ function apply(fn, args, env)
       eval(fn, env),
       args,
       env)
-  elseif native(fn) then
+  elseif first(fn) == "native" then
     args = evlist(args, env)
-    args = decons(args)
-    return fn(unpack(args))
+    return evnative(fn, args, env)
   elseif first(fn) == "fn" then
     assert(env ~= nil)
     args = evlist(args, env)
@@ -454,7 +467,7 @@ function apply(fn, args, env)
      string(fn))
   end
 end
-def("apply", apply)
+defnative("apply", args3, apply)
 function evcond(f, env)
   assert(f ~= nil,
    "cond fallthrough")
@@ -489,7 +502,7 @@ function ns(env)
   end
   return new
 end
-def("ns", ns)
+defnative("ns", args1, ns)
 function evlet(f, env)
   local vars = first(f)
   local envf = deflst(
@@ -540,26 +553,11 @@ function eval(form, env)
   end
 end
 assert(apply(
-  add_op,
+  tripple("native", args2, add_op),
   cons(1, cons(2, nil))) == 3)
 assert(eval(1) == 1)
 assert(eval(nil) == nil)
--- (+ 1 2)
-assert(
-  eval(
-    cons(add_op,
-      cons(1,
-        cons(2))))
-  == 3)
--- do (+ (+ 1 2) 3)
-assert(
-  eval(
-    cons(add_op,
-      cons(cons(add_op,
-             cons(1,
-               cons(2, nil))),
-        cons(3, nil)))) == 6)
-def("eval", eval)
+defnative("eval", args2, eval)
 -->8
 function takepred(p,r,l)
   local chars = 0
@@ -798,7 +796,6 @@ assert(
    read(
     str2cons(" ( abc 123 ) ")))
   == "(13 ((abc 123)) ())")
-def("print", print)
 
 function inject(expr)
   eval(
@@ -806,13 +803,6 @@ function inject(expr)
     parse(expr)), prelude)
 end
 inject("(def defn (macro (name args impl) `('def name `('fn args impl))))")
-inject("(defn + (a b) (add_op a b))")
-inject("(defn - (a b) (sub_op a b))")
-inject("(defn * (a b) (mul_op a b))")
-inject("(defn / (a b) (div_op a b))")
-inject("(defn % (a b) (mod_op a b))")
-inject("(defn > (a b) (gt_op a b))")
-inject("(defn < (a b) (lt_op a b))")
 inject("(defn inc (x) (+ x 1))")
 inject("(def defmacro (macro (name args impl) `('def name `('macro args impl))))")
 inject("(defmacro if (tst hpy sad) `('cond tst  hpy $t sad))")
@@ -848,7 +838,6 @@ end
 function grect(h,v,x,y,c)
   rectfill(h,v,h+x-1,v+y-1,c)
 end --grect(.)
-def("grect", grect)
 function clear_line(l)
   grect(0,l*8,128,5)
 end
@@ -871,7 +860,7 @@ function clear()
   end
   update_line(0,0)
 end
-def("clear", clear)
+defnative("clear", nil, clear)
 def("history", nil)
 def("hindex", -1)
 function update_hindex(delta)
@@ -999,7 +988,7 @@ function repl()
     end
   until getval("done", prelude)
 end --repl()
-def("sfx", sfx)
+defnative("sfx", args1, sfx)
 repl()
 
 __gfx__
