@@ -139,8 +139,8 @@ There are many functions which work with lists
   10
 > (map inc '(1 2 3))
   (2 3 4)
-> (filter (fn (x) (= x 1)) '(1 2))
-  (1)
+> (filter even? '(1 2 3 4))
+  (2 4)
 ```
 ### Symbols
 
@@ -207,6 +207,10 @@ Supported logic operators:
 * `and` logical and
 * `or` logical or
 * ``
+
+Predicates, functions which return true or false, typically end in a `?`.
+* `even?`
+* `odd?`
 
 Examples
 ```
