@@ -33,6 +33,11 @@ Press `<left>` and `<right>` to move the cursor.
 
 Toggle between insert and replace modes by pressing `<shift>-I`.
 
+`<shfit>-a` goes to start of line.
+`<shift>-e` goes to end of line.
+`<shift>-f` move forward to `)`
+`<shift>-b` move back to `(`
+
 ![Insert](insert.gif) ![Replace](replace.gif)
 
 # Language Specification:

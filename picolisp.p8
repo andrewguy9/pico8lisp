@@ -897,6 +897,15 @@ function insert(s, pos, c)
   local postfix = sub(s, pos, #s)
   return prefix .. c .. postfix
 end
+function seek(t, p, dir, side, stop)
+  p+=dir
+  --while sub(t, p, p)
+  while sub(t, p+dir*side, p+dir*side) != stop and p < #t and p > 0 do
+    p = p + dir
+  end
+  p = max(min(#t, p), 0)
+  return p
+end
 blink_frame = 0
 show_cursor = true
 cursor_width = 1
@@ -986,6 +995,15 @@ function repl()
           cursor_fn=replace
           cursor_width = 3
         end
+      elseif c == "\128" then -- cap A (start of line)
+        p = 0
+      elseif c == "\132" then -- cap E (end of line)
+        p = #t
+      elseif c == "\133" then -- cap F (forward 1 token)
+        p = seek(t, p, 1, 1, ")")
+      elseif c == "\129" then -- cap B (back 1 token)
+        p = seek(t, p, -1, 0, "(")
+      elseif c == "\150" then -- cap w (delete in parens)
       end
     end
   until getval("done", prelude)
